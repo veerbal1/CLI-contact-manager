@@ -47,6 +47,15 @@ func contactNamesByID(contacts []contact.Contact) map[int]string {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		helpArg := os.Args[1]
+		if helpArg == "help" {
+			fmt.Println("Usage: contactmanager help")
+			return
+		}
+		fmt.Println("Invalid argument")
+		return
+	}
 	contacts := make([]contact.Contact, 0)
 	nextID := 1
 
