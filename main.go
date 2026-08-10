@@ -2,43 +2,17 @@ package main
 
 import (
 	"bufio"
+	"contactmanager/contact"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
 
-type Contact struct {
-	ID    int
-	Name  string
-	Email string
-	Phone string
-}
-
-func (c *Contact) Update(name string, phone string, email string) {
-	c.Email = email
-	c.Phone = phone
-	c.Name = name
-}
-
-func addContact(contacts []Contact, contact Contact, nextID *int) []Contact {
+func addContact(contacts []contact.Contact, contact contact.Contact, nextID *int) []contact.Contact {
 	contact.ID = *nextID
 	*nextID++
 	return append(contacts, contact)
-}
-
-func deleteContactByID(contacts []Contact, id int) ([]Contact, bool) {
-	newContacts := make([]Contact, 0)
-	found := false
-	for index := range contacts {
-		if contacts[index].ID != id {
-			newContacts = append(newContacts, contacts[index])
-		} else {
-			found = true
-			continue
-		}
-	}
-	return newContacts, found
 }
 
 func takeUserInput(scanner *bufio.Scanner, title string) (string, error) {
@@ -54,7 +28,7 @@ func takeUserInput(scanner *bufio.Scanner, title string) (string, error) {
 	return userInput, nil
 }
 
-func listContacts(contacts []Contact) {
+func listContacts(contacts []contact.Contact) {
 	if len(contacts) == 0 {
 		fmt.Println("Empty contact list")
 		return
@@ -62,24 +36,9 @@ func listContacts(contacts []Contact) {
 	for _, contact := range contacts {
 		fmt.Println(contact.ID, contact.Name, contact.Phone, contact.Email)
 	}
-
-	contactsMap := contactNamesByID(contacts)
-	for id, name := range contactsMap {
-		fmt.Println(id, name)
-	}
 }
 
-func findContactByID(contacts []Contact, id int) (*Contact, bool) {
-	for index := range contacts {
-		contact := contacts[index]
-		if contact.ID == id {
-			return &contacts[index], true
-		}
-	}
-	return nil, false
-}
-
-func contactNamesByID(contacts []Contact) map[int]string {
+func contactNamesByID(contacts []contact.Contact) map[int]string {
 	contactsMap := make(map[int]string)
 	for index := range contacts {
 		contactsMap[contacts[index].ID] = contacts[index].Name
@@ -88,7 +47,7 @@ func contactNamesByID(contacts []Contact) map[int]string {
 }
 
 func main() {
-	contacts := make([]Contact, 0)
+	contacts := make([]contact.Contact, 0)
 	nextID := 1
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -142,13 +101,13 @@ func main() {
 				continue
 			}
 
-			contact := Contact{
+			contactNew := contact.Contact{
 				Name:  name,
 				Phone: phone,
 				Email: email,
 			}
 
-			contacts = addContact(contacts, contact, &nextID)
+			contacts = contact.AddContact(contacts, contactNew, &nextID)
 		case "2":
 			listContacts(contacts)
 		case "3":
@@ -162,7 +121,7 @@ func main() {
 				fmt.Println("Something went wrong")
 				continue
 			}
-			contact, found := findContactByID(contacts, textID)
+			contact, found := contact.FindContactByID(contacts, textID)
 			if !found {
 				fmt.Println("Could not find contact with ID: ", textID)
 				continue
@@ -181,7 +140,7 @@ func main() {
 				fmt.Println("Something went wrong")
 				continue
 			}
-			contact, found := findContactByID(contacts, textID)
+			contact, found := contact.FindContactByID(contacts, textID)
 			if !found {
 				fmt.Println("Could not find contact with ID: ", textID)
 				continue
@@ -232,7 +191,7 @@ func main() {
 				continue
 			}
 			// delete contact by id
-			updatedContacts, found := deleteContactByID(contacts, textID)
+			updatedContacts, found := contact.DeleteContactByID(contacts, textID)
 			if !found {
 				fmt.Println("Could not find contact with ID: ", textID)
 				continue
