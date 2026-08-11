@@ -3,25 +3,20 @@ package main
 import (
 	"bufio"
 	"contactmanager/contact"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func addContact(contacts []contact.Contact, contact contact.Contact, nextID *int) []contact.Contact {
-	contact.ID = *nextID
-	*nextID++
-	return append(contacts, contact)
-}
-
 func takeUserInput(scanner *bufio.Scanner, title string) (string, error) {
 	fmt.Print(title)
 	if !scanner.Scan() {
 		if err := scanner.Err(); err != nil {
-			fmt.Println("Input error:", err)
+			return "", err
 		}
-		return "", fmt.Errorf("got error")
+		return "", errors.New("input ended")
 	}
 	userInput := scanner.Text()
 	userInput = strings.TrimSpace(userInput)
@@ -82,32 +77,20 @@ func main() {
 		case "1":
 			name, err := takeUserInput(scanner, "Enter name: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
-			}
-			if name == "" {
-				fmt.Println("Provided empty name")
-				continue
 			}
 
 			phone, err := takeUserInput(scanner, "Enter phone: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
-			}
-			if phone == "" {
-				fmt.Println("Provided empty phone number")
-				continue
 			}
 
 			email, err := takeUserInput(scanner, "Enter email: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
-			}
-			if email == "" {
-				fmt.Println("Provided email is wrong")
-				continue
 			}
 
 			contactNew := contact.Contact{
@@ -116,93 +99,100 @@ func main() {
 				Email: email,
 			}
 
-			contacts = contact.AddContact(contacts, contactNew, &nextID)
+			contacts, err = contact.AddContact(contacts, contactNew, &nextID)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 		case "2":
 			listContacts(contacts)
 		case "3":
 			id, err := takeUserInput(scanner, "Type ID: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
 			}
 			textID, err := strconv.Atoi(id)
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				continue
 			}
-			contact, found := contact.FindContactByID(contacts, textID)
-			if !found {
-				fmt.Println("Could not find contact with ID: ", textID)
+			contact_, err := contact.FindContactByID(contacts, textID)
+			if errors.Is(err, contact.ErrContactNotFound) {
+				fmt.Println("Could not find contact with ID:", textID)
 				continue
 			}
-			fmt.Println((*contact).ID, contact.Name, contact.Phone, contact.Email)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fmt.Println((*contact_).ID, contact_.Name, contact_.Phone, contact_.Email)
 			continue
 		case "4":
 			// ask user for id
 			userInput, err := takeUserInput(scanner, "Type ID: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
 			}
 			textID, err := strconv.Atoi(userInput)
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				continue
 			}
-			contact, found := contact.FindContactByID(contacts, textID)
-			if !found {
-				fmt.Println("Could not find contact with ID: ", textID)
+			contact_, err := contact.FindContactByID(contacts, textID)
+			if errors.Is(err, contact.ErrContactNotFound) {
+				fmt.Println("Could not find contact with ID:", textID)
 				continue
 			}
-			fmt.Println((*contact).ID, contact.Name, contact.Phone, contact.Email)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fmt.Println(contact_.ID, contact_.Name, contact_.Phone, contact_.Email)
 			// Ask for the new name, phone, and email.
 			name, err := takeUserInput(scanner, "Enter name: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
 			}
 			phone, err := takeUserInput(scanner, "Enter phone: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
 			}
 			email, err := takeUserInput(scanner, "Enter email: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
 			}
-			// validate name, phone, email
-			if name == "" {
-				fmt.Println("Provided empty name")
-				continue
-			}
-			if phone == "" {
-				fmt.Println("Provided empty phone number")
-				continue
-			}
-			if email == "" {
-				fmt.Println("Provided email is wrong")
-				continue
-			}
 
-			contact.Update(name, phone, email)
+			err = contact_.Update(name, phone, email)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 			fmt.Println("Contact updated successfully")
 		case "5":
 			// ask user for id
 			userInput, err := takeUserInput(scanner, "Type ID: ")
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				return
 			}
 			textID, err := strconv.Atoi(userInput)
 			if err != nil {
-				fmt.Println("Something went wrong")
+				fmt.Println(err)
 				continue
 			}
 			// delete contact by id
-			updatedContacts, found := contact.DeleteContactByID(contacts, textID)
-			if !found {
-				fmt.Println("Could not find contact with ID: ", textID)
+			updatedContacts, err := contact.DeleteContactByID(contacts, textID)
+			if errors.Is(err, contact.ErrContactNotFound) {
+				fmt.Println("Could not find contact with ID:", textID)
+				continue
+			}
+			if err != nil {
+				fmt.Println(err)
 				continue
 			}
 			contacts = updatedContacts
