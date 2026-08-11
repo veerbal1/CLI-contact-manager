@@ -1,6 +1,9 @@
 package contact
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 type Contact struct {
 	ID    int
@@ -18,6 +21,8 @@ func (c Contact) Validate() error {
 		return errors.New("Phone is empty")
 	} else if c.Email == "" {
 		return errors.New("Email is empty")
+	} else if !strings.Contains(c.Email, "@") {
+		return errors.New("Email must contain @")
 	} else {
 		return nil
 	}

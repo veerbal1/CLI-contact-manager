@@ -10,6 +10,14 @@ import (
 	"strings"
 )
 
+func parseContactID(id string) (int, error) {
+	textID, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, fmt.Errorf("invalid contact ID: %w", err)
+	}
+	return textID, nil
+}
+
 func takeUserInput(scanner *bufio.Scanner, title string) (string, error) {
 	fmt.Print(title)
 	if !scanner.Scan() {
@@ -112,7 +120,7 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			textID, err := strconv.Atoi(id)
+			textID, err := parseContactID(id)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -135,7 +143,7 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			textID, err := strconv.Atoi(userInput)
+			textID, err := parseContactID(userInput)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -180,7 +188,7 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			textID, err := strconv.Atoi(userInput)
+			textID, err := parseContactID(userInput)
 			if err != nil {
 				fmt.Println(err)
 				continue
