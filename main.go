@@ -70,6 +70,17 @@ func main() {
 		helpArg := os.Args[1]
 		if helpArg == "help" {
 			fmt.Println("Usage: contactmanager help")
+			fmt.Println("")
+			fmt.Println("A CLI contact manager that stores contacts in contacts.json.")
+			fmt.Println("Run without arguments to open the interactive menu, then press:")
+			fmt.Println("  1  Add contact")
+			fmt.Println("  2  List contacts")
+			fmt.Println("  3  Find contact by ID")
+			fmt.Println("  4  Update contact by ID")
+			fmt.Println("  5  Delete contact by ID")
+			fmt.Println("  6  Exit")
+			fmt.Println("")
+			fmt.Println("Ctrl+C also exits safely.")
 			return
 		}
 		fmt.Println("Invalid argument")
