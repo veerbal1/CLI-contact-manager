@@ -6,10 +6,10 @@ import (
 )
 
 type Contact struct {
-	ID    int
-	Name  string
-	Email string
-	Phone string
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Phone string `json:"phone"`
 }
 
 var ErrContactNotFound = errors.New("contact not found")
@@ -79,4 +79,16 @@ func DeleteContactByID(contacts []Contact, id int) ([]Contact, error) {
 		return contacts, ErrContactNotFound
 	}
 	return newContacts, nil
+}
+
+func NextID(contacts []Contact) int {
+	maxID := 0
+
+	for _, contact := range contacts {
+		if contact.ID > maxID {
+			maxID = contact.ID
+		}
+	}
+
+	return maxID + 1
 }

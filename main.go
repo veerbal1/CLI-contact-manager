@@ -3,12 +3,18 @@ package main
 import (
 	"bufio"
 	"contactmanager/contact"
+	"contactmanager/storage"
+	"context"
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 )
+
+var fileName string = "contacts.json"
 
 func parseContactID(id string) (int, error) {
 	textID, err := strconv.Atoi(id)
@@ -50,6 +56,16 @@ func contactNamesByID(contacts []contact.Contact) map[int]string {
 }
 
 func main() {
+	ctx := context.Background()
+	cancelableCtx, cancel := context.WithCancel(ctx)
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	go func() {
+		<-signalChannel
+		fmt.Println("\nShutting down...")
+		cancel()
+	}()
 	if len(os.Args) > 1 {
 		helpArg := os.Args[1]
 		if helpArg == "help" {
@@ -59,12 +75,23 @@ func main() {
 		fmt.Println("Invalid argument")
 		return
 	}
-	contacts := make([]contact.Contact, 0)
-	nextID := 1
+	memoryStore := storage.NewJSONStore(fileName)
+	var store storage.Store = &memoryStore
+	contacts, err := store.Load()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	nextID := contact.NextID(contacts)
 
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
+		select {
+		case <-cancelableCtx.Done():
+			return
+		default:
+		}
 		fmt.Println("---------------------")
 		fmt.Println("Add Contact: Press 1")
 		fmt.Println("List contacts: Press 2")
@@ -112,6 +139,13 @@ func main() {
 				fmt.Println(err)
 				continue
 			}
+			// Save to JSON file
+			err = store.Save(contacts)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			fmt.Println("Contacts saved successfully")
 		case "2":
 			listContacts(contacts)
 		case "3":
@@ -180,6 +214,11 @@ func main() {
 				fmt.Println(err)
 				continue
 			}
+			err = store.Save(contacts)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 			fmt.Println("Contact updated successfully")
 		case "5":
 			// ask user for id
@@ -204,6 +243,11 @@ func main() {
 				continue
 			}
 			contacts = updatedContacts
+			err = store.Save(contacts)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 			fmt.Println("Contact deleted successfully")
 			continue
 		case "6":
